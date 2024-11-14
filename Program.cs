@@ -1,3 +1,4 @@
+using HttpClientWithResilience.Cache;
 using HttpClientWithResilience.Services;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
@@ -13,6 +14,10 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+#region Resilience
+
+// ###### customize some resilience policy ######
 
 builder.Services.AddHttpClient("CustomResilientClient")
     .AddResilienceHandler("normal", b =>
@@ -37,6 +42,8 @@ builder.Services.AddHttpClient("CustomResilientClient")
     .AddTimeout(TimeSpan.FromSeconds(20));
 });
 
+// ###### customize some resilience policy assigned to specific class by overriding standard policy ######
+
 builder.Services.AddHttpClient<ExternalWeatherService>("ResilientClientWithOptions") // pass specific handler to assigned class
     .AddStandardResilienceHandler(options =>
     {
@@ -48,9 +55,23 @@ builder.Services.AddHttpClient<ExternalWeatherService>("ResilientClientWithOptio
     }
     );
 
+#endregion
+
 builder.Services.AddScoped<ExternalWeatherService>();
 
+// add cache for response holding
+
+builder.Services.AddOutputCache(options =>
+    {
+        options.AddPolicy("nocache", x => x.NoCache());
+        options.AddPolicy("externalapi", x => {
+            x.Expire(TimeSpan.FromSeconds(120));
+        });
+        options.AddPolicy("customcachepolicy", OutputCacheWithAuthPolicy.Instance);
+    });
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -62,6 +83,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseRouting();
+
+app.UseOutputCache();
 
 app.MapControllers();
 

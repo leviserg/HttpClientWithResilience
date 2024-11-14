@@ -1,6 +1,7 @@
 using HttpClientWithResilience.Models;
 using HttpClientWithResilience.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace HttpClientWithResilience.Controllers
 {
@@ -10,17 +11,23 @@ namespace HttpClientWithResilience.Controllers
     {
         private readonly ILogger<WeatherForecastController> _logger;
         private readonly ExternalWeatherService _service;
+        private readonly IOutputCacheStore _cache;
+        private const string cityWeatheCacheTag = "cityweather";
 
         public ExternalWeatherController(
             ILogger<WeatherForecastController> logger,
-            ExternalWeatherService service
+            ExternalWeatherService service,
+            IOutputCacheStore cache
             )
         {
             _logger = logger;
             _service = service;
+            _cache = cache;
         }
 
         [HttpGet(Name = "GetWeather/{city}")]
+        //[OutputCache(PolicyName = "customcachepolicy", Duration = 20, NoStore = false)]
+        [OutputCache(PolicyName = "externalapi", Tags = [cityWeatheCacheTag])]
         public async Task<ActionResult<ExternalWeatherModel?>> GetCityWeather(string city)
         {
             try
@@ -31,7 +38,21 @@ namespace HttpClientWithResilience.Controllers
             catch (Exception ex) { 
                 return BadRequest(ex.Message);
             }
-
         }
+
+        [HttpPost(Name = "ResetCache")]
+        public async Task<ActionResult> ResetCache(CancellationToken ct)
+        {
+            try
+            {
+                await _cache.EvictByTagAsync(cityWeatheCacheTag, ct);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }
