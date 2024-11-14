@@ -6,7 +6,7 @@ namespace HttpClientWithResilience.Services
     public class ExternalWeatherService
     {
         private readonly HttpClient _httpClient;
-
+        private string openWeatherApiKey => Environment.GetEnvironmentVariable("OpenWeatherApiKey") ?? string.Empty;
         // private readonly ResiliencePipelineProvider<string> _pipelineProvider; // * w/o .AddStandardResilienceHndler() in Program.cs
 
         public ExternalWeatherService(
@@ -21,7 +21,7 @@ namespace HttpClientWithResilience.Services
         public async Task<ExternalWeatherModel?> GetCurrentWetherAsync(string city)
         {
 
-            var url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={your app id here}";
+            var url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={openWeatherApiKey}";
 
             // var pipeline = _pipelineProvider.GetPipeline("default") // * w/o .AddStandardResilienceHndler() in Program.cs
 

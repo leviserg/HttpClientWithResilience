@@ -27,7 +27,7 @@ namespace HttpClientWithResilience.Controllers
 
         [HttpGet(Name = "GetWeather/{city}")]
         //[OutputCache(PolicyName = "customcachepolicy", Duration = 20, NoStore = false)]
-        [OutputCache(PolicyName = "externalapi", Tags = [cityWeatheCacheTag])]
+        [OutputCache(PolicyName = "externalapi", Tags = [cityWeatheCacheTag], VaryByRouteValueNames = ["city"])]
         public async Task<ActionResult<ExternalWeatherModel?>> GetCityWeather(string city)
         {
             try
