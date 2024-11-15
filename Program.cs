@@ -4,6 +4,7 @@ using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using Polly.Fallback;
 using Polly.Timeout;
+using StackExchange.Redis;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,10 +65,17 @@ builder.Services.AddScoped<ExternalWeatherService>();
 builder.Services.AddOutputCache(options =>
     {
         options.AddPolicy("nocache", x => x.NoCache());
-        options.AddPolicy("externalapi", x => {
-            x.Expire(TimeSpan.FromSeconds(120));
+        options.AddPolicy("externalapi", x =>
+        {
+            x.Expire(TimeSpan.FromSeconds(600));
         });
         options.AddPolicy("customcachepolicy", OutputCacheWithAuthPolicy.Instance);
+    })
+    .AddStackExchangeRedisOutputCache(options =>
+    {
+        //x.ConnectionMultiplexerFactory = async () => await ConnectionMultiplexer.ConnectAsync("localhost:6379");
+        options.InstanceName = "externalapi"; // key prefix in redis cache db
+        options.Configuration = "localhost:6379";
     });
 
 var app = builder.Build();

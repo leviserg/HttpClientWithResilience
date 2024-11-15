@@ -13,6 +13,7 @@ namespace HttpClientWithResilience.Cache
             context.AllowCacheLookup = attemptOutputCaching;
             context.AllowCacheStorage = attemptOutputCaching;
             context.AllowLocking = true;
+            // context.ResponseExpirationTimeSpan = TimeSpan.FromSeconds(30);
 
             // Vary by any query by default
             context.CacheVaryByRules.QueryKeys = "*";

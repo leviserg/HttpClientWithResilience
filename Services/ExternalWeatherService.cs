@@ -18,7 +18,7 @@ namespace HttpClientWithResilience.Services
             // _pipelineProvider = pipelineProvider; // * w/o .AddStandardResilienceHndler() in Program.cs
         }
 
-        public async Task<ExternalWeatherModel?> GetCurrentWetherAsync(string city)
+        public async Task<CustomWeatherModel> GetCurrentWetherAsync(string city)
         {
 
             var url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={openWeatherApiKey}";
@@ -38,7 +38,9 @@ namespace HttpClientWithResilience.Services
                 throw new Exception("Requested city not found");
             }
 
-            return await weatherResponse.Content.ReadFromJsonAsync<ExternalWeatherModel?>();
+            var content = await weatherResponse.Content.ReadFromJsonAsync<ExternalWeatherModel?>();
+
+            return (content == null) ? new CustomWeatherModel() : content.ToCustomWeatherModel();
         }
     }
 }
